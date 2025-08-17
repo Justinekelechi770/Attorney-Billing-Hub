@@ -623,10 +623,11 @@
     )
 )
 
-;; Update legal case status
+;; Update legal case status - FIXED with proper validation
 (define-public (update-legal-case-status (case-reference-id uint) (new-status-value (string-ascii 20)))
     (let ((case-information (unwrap! (get-case-information case-reference-id) ERR-CASE-NOT-FOUND)))
         (asserts! (is-caller-contract-owner) ERR-UNAUTHORIZED-ACCESS)
+        (asserts! (is-case-id-in-valid-range case-reference-id) ERR-CASE-NOT-FOUND)
         (asserts! (is-case-status-valid new-status-value) ERR-INVALID-STATUS-VALUE)
         
         (map-set legal-cases case-reference-id 
@@ -775,6 +776,7 @@
     (let ((case-information (unwrap! (get-case-information case-reference-id) ERR-CASE-NOT-FOUND))
           (current-total (get total-billed-amount case-information)))
         (asserts! (is-caller-contract-owner) ERR-UNAUTHORIZED-ACCESS)
+        (asserts! (is-case-id-in-valid-range case-reference-id) ERR-CASE-NOT-FOUND)
         (asserts! (> additional-amount u0) ERR-INVALID-AMOUNT)
         
         (map-set legal-cases case-reference-id 
@@ -844,6 +846,7 @@
 (define-public (emergency-withdraw-contract-balance (recipient principal))
     (begin
         (asserts! (is-caller-contract-owner) ERR-UNAUTHORIZED-ACCESS)
+        (asserts! (is-principal-address-valid recipient) ERR-INVALID-PRINCIPAL-ADDRESS)
         (try! (as-contract (stx-transfer? (stx-get-balance tx-sender) tx-sender recipient)))
         (ok true)
     )
